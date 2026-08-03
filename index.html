@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TranslateCheck — Prompt Generator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&family=JetBrains+Mono:wght@300;400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#f7f5f0;--surface:#ffffff;--surface2:#f0ede6;--border:#ddd9d0;--border-focus:#8a7a5a;
+    --ink:#1a1714;--ink-mid:#4a4540;--ink-dim:#8a8278;--ink-faint:#c5bfb5;
+    --accent:#5c4a1e;--accent-light:#8a6f30;--accent-bg:#f5f0e4;
+    --green:#2d6a4f;--green-bg:#eaf4ee;--green-bd:#a8d5b8;--radius:6px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--bg);color:var(--ink);font-family:'DM Sans',sans-serif;font-size:15px;line-height:1.6;min-height:100vh;}
+  .topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:0 32px;display:flex;align-items:center;justify-content:space-between;height:56px;position:sticky;top:0;z-index:100;}
+  .logo{font-family:'DM Serif Display',serif;font-size:20px;color:var(--accent);}
+  .logo span{color:var(--ink-dim);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:300;margin-left:10px;}
+  .topbar-tag{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--ink-faint);letter-spacing:0.1em;text-transform:uppercase;}
+  .page{max-width:780px;margin:0 auto;padding:48px 24px 100px;}
+  #login-screen{max-width:400px;margin:80px auto 0;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:40px 36px;text-align:center;box-shadow:0 2px 20px rgba(0,0,0,0.06);}
+  .lock-icon{width:44px;height:44px;background:var(--accent-bg);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;font-size:18px;}
+  #login-screen h2{font-family:'DM Serif Display',serif;font-size:22px;font-weight:400;margin-bottom:6px;}
+  #login-screen p{font-size:14px;color:var(--ink-dim);margin-bottom:28px;}
+  .pw-input{width:100%;padding:11px 16px;border:1px solid var(--border);border-radius:var(--radius);font-family:'JetBrains Mono',monospace;font-size:14px;letter-spacing:0.12em;text-align:center;background:var(--bg);color:var(--ink);outline:none;transition:border-color 0.15s;margin-bottom:14px;}
+  .pw-input:focus{border-color:var(--border-focus);}
+  .pw-error{font-size:13px;color:#8b2020;margin-bottom:12px;display:none;}
+  .btn-primary{display:inline-flex;align-items:center;gap:8px;padding:11px 24px;background:var(--accent);color:#fff;border:none;border-radius:var(--radius);font-family:'DM Sans',sans-serif;font-size:15px;font-weight:500;cursor:pointer;transition:opacity 0.15s;white-space:nowrap;}
+  .btn-primary:hover{opacity:0.88;}
+  .btn-full{width:100%;justify-content:center;padding:13px 24px;font-size:16px;}
+  .btn-ghost{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;background:transparent;color:var(--ink-mid);border:1px solid var(--border);border-radius:var(--radius);font-family:'DM Sans',sans-serif;font-size:14px;cursor:pointer;transition:border-color 0.15s;}
+  .btn-ghost:hover{border-color:var(--ink-dim);color:var(--ink);}
+  .btn-copy{display:inline-flex;align-items:center;gap:8px;padding:12px 28px;background:var(--green);color:#fff;border:none;border-radius:var(--radius);font-family:'DM Sans',sans-serif;font-size:16px;font-weight:500;cursor:pointer;transition:opacity 0.15s;}
+  .btn-copy:hover{opacity:0.88;}
+  .btn-copy.copied{background:#1a4a30;}
+  #app{display:none;}
+  .page-header{margin-bottom:36px;}
+  .page-header h1{font-family:'DM Serif Display',serif;font-size:30px;font-weight:400;margin-bottom:6px;}
+  .page-header p{font-size:14px;color:var(--ink-dim);}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:32px;margin-bottom:20px;}
+  .card-title{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:20px;}
+  .field{margin-bottom:20px;}
+  .field:last-child{margin-bottom:0;}
+  .field label{display:block;font-size:13px;font-weight:500;color:var(--ink-mid);margin-bottom:6px;}
+  .field label .hint{font-weight:300;color:var(--ink-faint);font-size:12px;margin-left:6px;}
+  select,input[type="number"],textarea{width:100%;padding:10px 14px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);color:var(--ink);font-family:'DM Sans',sans-serif;font-size:15px;outline:none;transition:border-color 0.15s;-webkit-appearance:none;appearance:none;}
+  select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='7' viewBox='0 0 12 7'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%238a8278' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;padding-right:36px;cursor:pointer;}
+  select:focus,input:focus,textarea:focus{border-color:var(--border-focus);background:#fff;}
+  textarea{resize:vertical;min-height:130px;line-height:1.65;}
+  input[type="number"]{max-width:130px;}
+  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+  @media(max-width:560px){.grid-2{grid-template-columns:1fr;}}
+  .sep{border:none;border-top:1px solid var(--border);margin:24px 0;}
+  .error-inline{background:#fdf0f0;border:1px solid #f0b0b0;border-radius:var(--radius);padding:14px 18px;color:#8b2020;font-size:14px;display:none;margin-bottom:16px;}
+  #result{display:none;margin-top:28px;}
+  .result-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:28px 32px;margin-bottom:20px;}
+  .result-label{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:14px;}
+  .prompt-box{background:var(--bg);border:1px solid var(--border);border-radius:4px;padding:20px;font-family:'JetBrains Mono',monospace;font-size:12px;line-height:1.7;color:var(--ink-mid);white-space:pre-wrap;word-break:break-word;max-height:300px;overflow-y:auto;}
+  .steps-card{background:var(--green-bg);border:1px solid var(--green-bd);border-radius:var(--radius);padding:24px 28px;margin-bottom:20px;}
+  .steps-card h3{font-family:'DM Serif Display',serif;font-size:18px;font-weight:400;color:var(--green);margin-bottom:14px;}
+  .step-item{display:flex;gap:14px;margin-bottom:12px;align-items:flex-start;}
+  .step-num{background:var(--green);color:white;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;flex-shrink:0;margin-top:1px;}
+  .step-text{font-size:14px;color:var(--ink-mid);line-height:1.5;}
+  .step-text strong{color:var(--ink);}
+  .copy-row{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-top:16px;}
+  .char-count{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ink-faint);}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="logo">TranslateCheck <span>Prompt Generator</span></div>
+  <div class="topbar-tag" id="topbar-info" style="display:none;">ChatGPT Mode</div>
+</div>
+<div class="page">
+  <div id="login-screen">
+    <div class="lock-icon">🔒</div>
+    <h2>Team Access</h2>
+    <p>Enter your team passphrase to continue</p>
+    <input type="password" class="pw-input" id="pw" placeholder="passphrase" autocomplete="off">
+    <div class="pw-error" id="pw-error">Incorrect passphrase — please try again.</div>
+    <button class="btn-primary btn-full" onclick="checkPw()">Continue →</button>
+  </div>
+  <div id="app">
+    <div class="page-header">
+      <h1>Translation Evaluator</h1>
+      <p>Fill in the details below. We'll generate a ready-to-paste evaluation prompt for ChatGPT.</p>
+    </div>
+    <div class="card">
+      <div class="card-title">Submission Details</div>
+      <div class="grid-2">
+        <div class="field">
+          <label>Submission Type</label>
+          <select id="type-sel">
+            <option value="Dub Short">Dub Short</option>
+            <option value="Quote">Quote</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Original Language</label>
+          <select id="orig-lang">
+            <option value="Hindi">Hindi</option>
+            <option value="English">English</option>
+          </select>
+        </div>
+      </div>
+      <div class="grid-2" style="margin-top:16px;">
+        <div class="field">
+          <label>Translation Language</label>
+          <select id="trans-lang">
+            <option value="Kannada">Kannada</option>
+            <option value="Tamil">Tamil</option>
+            <option value="Telugu">Telugu</option>
+            <option value="Malayalam">Malayalam</option>
+            <option value="Marathi">Marathi</option>
+            <option value="Gujarati">Gujarati</option>
+            <option value="Punjabi">Punjabi</option>
+            <option value="Odia">Odia</option>
+            <option value="Bangla">Bangla</option>
+          </select>
+        </div>
+        <div class="field" id="dur-wrap">
+          <label>Original Duration <span class="hint">optional, seconds</span></label>
+          <input type="number" id="duration" placeholder="e.g. 62" min="1" max="999">
+        </div>
+      </div>
+      <hr class="sep">
+      <div class="field">
+        <label>Original Text <span class="hint">full Hindi or English transcript / quote</span></label>
+        <textarea id="orig-text" rows="7" placeholder="Paste original text here…"></textarea>
+      </div>
+      <div class="field" style="margin-top:16px;">
+        <label>Translation <span class="hint">in the regional language</span></label>
+        <textarea id="trans-text" rows="7" placeholder="Paste translated text here…"></textarea>
+      </div>
+    </div>
+    <div class="error-inline" id="err-box"></div>
+    <button class="btn-primary btn-full" onclick="generatePrompt()">Generate Evaluation Prompt →</button>
+    <div id="result">
+      <div class="steps-card">
+        <h3>✓ Your prompt is ready</h3>
+        <div class="step-item"><div class="step-num">1</div><div class="step-text"><strong>Copy the prompt</strong> using the button below</div></div>
+        <div class="step-item"><div class="step-num">2</div><div class="step-text">Open <strong>chatgpt.com</strong> → start a new chat</div></div>
+        <div class="step-item"><div class="step-num">3</div><div class="step-text"><strong>Paste</strong> (Ctrl+V) and hit Enter</div></div>
+        <div class="step-item"><div class="step-num">4</div><div class="step-text">Get your full evaluation with scores, vocabulary alternatives, and discussion questions</div></div>
+      </div>
+      <div class="result-card">
+        <div class="result-label">Prompt Preview</div>
+        <div class="prompt-box" id="prompt-preview"></div>
+        <div class="copy-row">
+          <button class="btn-copy" id="copy-btn" onclick="copyPrompt()">📋 Copy Full Prompt</button>
+          <span class="char-count" id="char-count"></span>
+        </div>
+      </div>
+      <div style="margin-top:8px;">
+        <button class="btn-ghost" onclick="resetForm()">← Evaluate another</button>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+const PASSWORD = "apteam2025";
+let generatedPrompt = "";
+
+function checkPw() {
+  const v = document.getElementById('pw').value.trim();
+  if (v === PASSWORD) {
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    document.getElementById('topbar-info').style.display = 'block';
+  } else {
+    document.getElementById('pw-error').style.display = 'block';
+    document.getElementById('pw').value = '';
+    document.getElementById('pw').focus();
+  }
+}
+document.getElementById('pw').addEventListener('keydown', e => { if (e.key === 'Enter') checkPw(); });
+document.getElementById('type-sel').addEventListener('change', function() {
+  document.getElementById('dur-wrap').style.opacity = this.value === 'Dub Short' ? '1' : '0.35';
+});
+
+const PROMPT_TEMPLATE = "You are a strict, expert evaluator of regional language translations of philosophical discourse. The teacher whose content you are evaluating is a contemporary Indian Advaita-influenced thinker whose voice is direct, unadorned, intellectually rigorous, and completely free of devotional or religious softness.\n\nYour job is threefold:\n1. Evaluate the translation honestly and strictly against the parameters below\n2. Offer rich vocabulary alternatives wherever better options exist\n3. End by genuinely engaging the translator in a conversation about their choices\n\nCRITICAL RULES:\n- Every score must be justified with specific text evidence — no generic praise\n- Do not inflate scores. A mediocre translation earns a mediocre score\n- For EVERY regional language term you quote anywhere in your response, provide its Roman script transliteration immediately below it, formatted as:\n  Regional: [text]\n  Transliteration: [phonetic Roman rendering]\n- This transliteration rule applies everywhere — scores, alternatives, notes, questions — no exceptions\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nAP CONCEPT GLOSSARY — TRANSLATE WITH EXACT PRECISION\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\nEGO (अहंकार): The false sense of being a separate, independent self. NOT pride or arrogance — it is the very structure of personal identity. It IS incompleteness itself — not \"has\" incompleteness, not \"wants\" completeness. Never render as pride/arrogance.\n\nINCOMPLETENESS: The ego's fundamental ontological nature — constitutive restlessness. NOT desire, NOT want, NOT lack. \"Ego IS incompleteness\" — this exact relationship must survive translation.\n\nSEEING (देखना) vs UNDERSTANDING (समझना): Distinct and both necessary for transformation. Seeing = direct perception of what is. Understanding = intellectual grasp. Never merge these. Transformation requires BOTH seeing AND intent — never seeing alone.\n\nINTENT (इरादा): Deep orientation of one's being. NOT willpower, NOT determination, NOT effort. Must stay distinct from seeing.\n\nCOMPASSION vs MERCY: Philosophically opposite. Compassion = responding from understanding of the other's true nature, without pity. Mercy = condescending kindness from superiority. Never conflate. This is a critical distinction.\n\nTRUTH (सत्य): Fundamental reality underlying appearances — NOT factual correctness, NOT honesty. Never render as \"fact\" or \"correctness.\"\n\nLIBERATION (मुक्ति): Freedom from compulsive ego-functioning — NOT political freedom, NOT freedom-from-rules. Must retain philosophical weight.\n\nMIND (मन): Totality of psychological activity — thoughts, emotions, memories, desires. NOT brain, NOT intellect.\n\nSILENCE (मौन): Inner silence — cessation of compulsive mental chatter. NOT merely \"quiet\" or \"not speaking.\"\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nREGISTER — WHAT THE VOICE MUST SOUND LIKE\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\nFOR DUB SHORTS:\nThe register must be colloquial spoken — how an educated urban native speaker of that language would actually say this in conversation. Not literary, not formal, not written prose. The voice carries AP's full intellectual weight and dignity but lands in the spoken register of that language's educated urban youth. Think: sharp, direct, zero devotional softness, slightly conversational but never casual to the point of losing precision.\n\nFOR QUOTES:\nProvide TWO versions:\n- Literal: stays close to the original's structure and word choices\n- Colloquial: how a sharp, educated native speaker would express the same idea naturally\n\nBoth versions must preserve AP's directness. Neither should sound devotional or preachy.\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nLANGUAGE-SPECIFIC GUIDELINES\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n[LANGUAGE_SPECIFIC_BLOCK]\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nSENTENCE RESTRUCTURING\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\nRestructuring is ALLOWED and should be CREDITED — a restructured sentence that flows naturally is better than a literal translation that sounds stiff. Judge: is the meaning preserved? Is the emphasis on the right word? Is the rhetorical punch intact?\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nEVALUATION PARAMETERS\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\nP1 — SEMANTIC FIDELITY /20\nExact meaning preserved sentence by sentence. -5 per meaning reversal or inversion.\n\nP2 — CONCEPT INTEGRITY /20\nAll glossary concepts translated with philosophical precision.\n-5 per concept reversal.\nMandatory checks:\n→ Incompleteness Test: does \"ego IS incompleteness\" survive?\n→ Seeing/Intent Test: are both kept distinct as necessary conditions?\n\nP3 — REGISTER /10\nFor Dub Short: colloquial spoken, educated urban, AP's dignity intact — not literary, not devotional.\nFor Quote: both literal and colloquial versions evaluated separately.\n\nP4 — NATURALNESS & FLUENCY /10\nReads as naturally composed — not translated. Credit restructured sentences that flow. Penalise mechanical word-for-word rendering.\n\nP5 — CULTURAL CONTAMINATION /10\nNo devotional, caste, or tradition-specific baggage in chosen terms. Check for words carrying Vaishnava, Shaiva, Buddhist, Sikh, Jain or folk-tradition connotations not present in the original.\n\nP6 — RHETORICAL & STRESS FIDELITY /10\nRepetition, staccato sentences, rhetorical questions, emphasis patterns — all must survive.\nWeight must land on the same moment as the original.\nPenalise: merging short punchy sentences into one long one; converting rhetorical questions to statements; flattening emphasis.\n\nP7 — COMPLETENESS /10 [DUB SHORT ONLY]\nAll content covered, nothing omitted or added.\n\nP8 — LITERARY QUALITY & REGIONAL VOICE /10\nSounds like it was written by a skilled native writer in that language's own tradition.\nUses standard widely-understood dialect. Not generic, not machine-translated feeling.\n\nP9 — PACING/LENGTH /10 [DUB SHORT ONLY]\nUse the language-specific acceptable expansion threshold from the guidelines above.\n\nTOTALS:\nDub Short: /110 → Approved ≥93 | Revise 71–92 | Redo <71\nQuote: /90 (P1+P2+P3+P4+P5+P6+P8) → Approved ≥76 | Revise 58–75 | Redo <58\n\nOVERRIDE — cannot be APPROVED regardless of total:\n- P2 < 10/20\n- Any concept reversal triggered\n- P1 < 10/20 (Dub Short only)\n- P9 < 4/10 (Dub Short only)\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nOUTPUT FORMAT — follow exactly\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nTRANSLATION EVALUATION REPORT\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nType: [TYPE]\nOriginal Language: [ORIG_LANG]\nTranslation Language: [TRANS_LANG]\n\n─────────────────────────────────────────\nPART A — ORIGINAL ANALYSIS\n─────────────────────────────────────────\nConcepts identified: [list every AP concept present, explicit or implicit]\nRhetorical devices: [repetition / staccato / rhetorical questions / parallel structure / etc.]\nStress map: [key stressed moments in original → does translation preserve each?]\n\n─────────────────────────────────────────\nPART B — PARAMETER SCORES\n─────────────────────────────────────────\n\n[For each parameter:]\nPARAMETER [N] — [NAME]: [score]/[max]\n[Specific evidence-based feedback. For every flagged term:]\n  Regional: [text in regional script]\n  Transliteration: [Roman]\n  Issue: [what's wrong]\n  Better options:\n    Option 1 — Regional: [text] | Transliteration: [Roman] | Why: [one line]\n    Option 2 — Regional: [text] | Transliteration: [Roman] | Why: [one line]\n    Option 3 — Regional: [text] | Transliteration: [Roman] | Why: [one line, if exists]\n\n[For P2 specifically:]\n  Incompleteness Test: Pass / Fail\n  Seeing + Intent Test: Pass / Fail\n\n─────────────────────────────────────────\nPART C — VOCABULARY ALTERNATIVES\n─────────────────────────────────────────\n[For every notable word or phrase in the translation — not just the flagged ones — offer alternatives:]\n\nWord/Phrase:\n  Used:\n    Regional: [text] | Transliteration: [Roman]\n  Alternatives:\n    a) Regional: [text] | Transliteration: [Roman] — [register note: more colloquial / more literary / more precise]\n    b) Regional: [text] | Transliteration: [Roman] — [register note]\n    c) Regional: [text] | Transliteration: [Roman] — [register note, if exists]\n\n[Cover at least 5–8 notable words/phrases. Skip trivial words.]\n\n─────────────────────────────────────────\nPART D — VERDICT\n─────────────────────────────────────────\nTOTAL: [X]/[90 or 110]\nVERDICT: APPROVED / REVISE AND RECHECK / REDO TRANSLATION\n[Override rule triggered, if any]\n[One sentence on the translation's single biggest strength]\n[One sentence on the single most important thing to fix]\n\n─────────────────────────────────────────\nPART E — CONVERSATION WITH THE TRANSLATOR\n─────────────────────────────────────────\n[This section is NOT a summary. It is a genuine, curious engagement with this specific translator about THIS specific translation. Pick 3–4 of the most interesting, debatable, or problematic choices in the translation and open them up as real questions. These questions should:]\n- Reference specific words or lines from the translation (with transliteration)\n- Ask why they made that choice — not rhetorically, but genuinely\n- Suggest there might be another valid path and invite them to defend or reconsider\n- Feel like a thoughtful senior colleague who read their work carefully, not an examiner\n\n[Example tone — not template:]\n\"You used [word] for [concept] — I noticed this choice and I'm curious about it. [Word] carries [X connotation] in [language], which [does/doesn't] sit well here because [reason]. Was this intentional? Did you consider [alternative]? I'd like to understand your thinking.\"\n\n[End with one open invitation — something like: \"Is there any line in this translation you yourself are not fully satisfied with? I'd like to hear that.\"]\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nNOW EVALUATE:\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\nTYPE: [TYPE]\nORIGINAL LANGUAGE: [ORIG_LANG]\n[If Dub Short] ORIGINAL DURATION: [DURATION] seconds\nTRANSLATION LANGUAGE: [TRANS_LANG]\n\nORIGINAL TEXT:\n[ORIGINAL_TEXT]\n\nTRANSLATION:\n[TRANSLATION_TEXT]";
+const LANG_BLOCKS = {"Kannada": "KANNADA-SPECIFIC GUIDELINES:\nDialect: Standard Mysuru-Bengaluru Kannada. This is the reference — not Dharwad, not Mangalore.\nSpoken register markers: Use halant-clipped forms mid-sentence (ಮಾಡ್ತೀನಿ, ಹೋಗ್ತೀನಿ, ಬರ್ತಾನೆ) but AVOID sentence-final clipping — it causes glottal stop artifacts in TTS.\nLiterary calibration: Kuvempu's plain philosophical prose (clear, rooted, never ornate). Girish Karnad's crisp dialogue rhythm.\nPacing threshold (Dub Short): up to +20% longer than original is acceptable.\nWATCH — Cultural contamination risks:\n  - Bhakti/Vaishnava vocabulary: ಭಕ್ತಿ (bhakti), ಪ್ರಸಾದ (prasāda), ದಾಸ (dāsa) — avoid unless original uses devotional language\n  - Archaic honorific forms that elevate AP into a guru register — he speaks as a peer\n  - Overly Sanskritised compounds that sound scholarly rather than direct\n  - ಮೋಕ್ಷ (mōkṣa) for liberation — carries classical Vedantic positive-content connotation AP's framework doesn't hold\nPREFERRED: ಸ್ವಾತಂತ್ರ್ಯ or ಬಿಡುಗಡೆ for liberation; ಅಹಂಕಾರ for ego (acceptable as-is); ಮೌನ for silence (acceptable)\nCODE-MIXING: Urban educated Kannada naturally code-mixes English nouns — retain English terms in Latin script (e.g. ego, mind, identity) if translator used them and they sound natural.", "Tamil": "TAMIL-SPECIFIC GUIDELINES:\nDialect: Standard Chennai Tamil — spoken, educated, urban. Not Madurai dialect, not archaic Sentamil.\nSpoken register markers: Use spoken contractions naturally (என்னன்னா, ஆனா, இல்லன்னா). For Dub Shorts, written-prose sentence endings (-கிறது, -கின்றது) should be replaced with spoken forms (-குது, -ஆகுது).\nLiterary calibration: Jayakanthan's lucid essay prose, Kural's aphoristic precision. Economy of words is a Tamil virtue — don't pad.\nPacing threshold (Dub Short): up to +25% longer than original is acceptable — Tamil naturally runs longer.\nWATCH — Cultural contamination risks:\n  - Saiva Siddhanta vocabulary: சிவம் (Śivam), அருள் (aruḷ — \"grace\" with Shaiva weight), திருவருள் (divine grace)\n  - Bhakti tradition terms: பக்தி (bhakti), சரணாகதி (śaraṇāgati — surrender to god)\n  - அருள் (aruḷ) for compassion — carries divine grace connotation; prefer கருணை (karuṇai) for compassion\n  - இரக்கம் (irakam) for mercy — acceptable, but check it doesn't bleed into pity\n  - முக்தி (mukti) — carries classical moksha weight; consider விடுதலை (viḍuthalai) for liberation\nPREFERRED: கருணை for compassion; இரக்கம் for mercy (keeping them distinct is critical); அகந்தை (aganthai) for ego; மௌனம் (maunam) for silence; உண்மை (uṇmai) for truth\nCODE-MIXING: Chennai Tamil naturally absorbs English — retain English technical terms in Latin script if they sound natural spoken.", "Telugu": "TELUGU-SPECIFIC GUIDELINES:\nDialect: Standard Coastal Andhra Telugu (Krishna-Guntur belt). Middle register — neither hyper-colloquial nor archaic Grandhika written Telugu.\nSpoken register markers: Use natural spoken forms (-తున్నాను → -తున్నా, -అయింది → -అయింది is fine). Avoid heavy Grandhika verbal endings that sound like classical literature.\nLiterary calibration: Viswanatha Satyanarayana's measured philosophical prose. Middle register — accessible but not dumbed down.\nPacing threshold (Dub Short): up to +20% longer than original is acceptable.\nWATCH — Cultural contamination risks:\n  - Vaishnava vocabulary: భక్తి (bhakti), ప్రసాదం (prasādam), శరణాగతి (śaraṇāgati)\n  - Overly Sanskritised vocabulary that sounds scholarly rather than direct — Telugu has strong Sanskrit influence; resist the pull toward heavy tatsama words when tadbhava or native words exist\n  - మోక్షం (mōkṣam) for liberation — carries classical connotation; consider విముక్తి (vimukti) or స్వేచ్ఛ (svēccha)\n  - అనుగ్రహం (anugraham) for compassion — carries divine grace weight; prefer కరుణ (karuṇa)\nPREFERRED: అహంకారం (ahaṃkāram) for ego; కరుణ (karuṇa) for compassion; దయ (daya) for mercy — keep these distinct; మౌనం (maunam) for silence; సత్యం (satyam) for truth (acceptable); విముక్తి for liberation", "Malayalam": "MALAYALAM-SPECIFIC GUIDELINES:\nDialect: Standard written Malayalam — not heavy Thiruvananthapuram dialect, not Malabar dialect. The educated pan-Kerala written/spoken register.\nSpoken register markers: For Dub Shorts, use spoken contractions naturally. Malayalam has a significant gap between written (manipravalam-influenced) and spoken forms — lean spoken for Shorts, standard written for Quotes.\nLiterary calibration: O.V. Vijayan's clear, unsparing philosophical prose. M.T. Vasudevan Nair's essayistic directness. Malayalam can carry complex ideas in short, dense sentences — resist padding.\nPacing threshold (Dub Short): up to +25% longer than original — Malayalam naturally runs long.\nWATCH — Cultural contamination risks:\n  - Kerala temple tradition vocabulary: അനുഗ്രഹം (anugraham — divine blessing), ഭക്തി (bhakti), ശരണം (śaraṇam)\n  - Shakta vocabulary creeping in through common usage\n  - അനുഗ്രഹം for compassion — avoid; prefer കരുണ (karuṇa)\n  - മോക്ഷം (mōkṣam) — carries classical weight; consider വിമുക്തി (vimukti) or സ്വാതന്ത്ര്യം (svātantryam)\n  - അഹം (aham) for ego — too Vedantic-technical; prefer അഹംഭാവം (ahaṃbhāvam) or അഹന്ത (ahanta)\nPREFERRED: കരുണ (karuṇa) for compassion; കനിവ് (kanivu) for mercy — keep distinct; മൗനം (maunam) for silence; സത്യം (satyam) for truth; അഹംഭാവം for ego", "Marathi": "MARATHI-SPECIFIC GUIDELINES:\nDialect: Standard Pune/Mumbai Marathi. The educated urban register — not rural Maharashtra, not heavy Vidarbha dialect.\nSpoken register markers: Use natural colloquial forms for Dub Shorts (आहे → आहे is fine; avoid overly formal होते constructions). Marathi has a punchy directness — preserve it.\nLiterary calibration: P.L. Deshpande's direct, warm-but-sharp register. Pu La's accessible conversational depth. Marathi readers expect clarity and slight warmth of address — but AP's voice removes the warmth, keep it direct.\nPacing threshold (Dub Short): up to +18% longer than original.\nWATCH — Cultural contamination risks:\n  - Warkari sant tradition: हरी (Hari), विठ्ठल (Viṭṭhal), अभंग-register language, नामस्मरण — this tradition runs VERY deep in Marathi and will bleed in unconsciously\n  - भक्ती (bhakti) register words — extremely common in Marathi philosophical discourse; resist\n  - कृपा (kṛpā) for compassion — carries divine grace weight; prefer करुणा (karuṇā)\n  - मोक्ष (mōkṣa) — prefer मुक्ती (mukti) or स्वातंत्र्य (svātantryam)\n  - अहंकार (ahaṃkār) for ego — acceptable but watch it doesn't slip into pride connotation\nPREFERRED: करुणा (karuṇā) for compassion; दया (dayā) for mercy — keep distinct; मौन (maun) for silence; सत्य (satya) for truth; अहंकार for ego; मुक्ती for liberation", "Gujarati": "GUJARATI-SPECIFIC GUIDELINES:\nDialect: Standard Ahmedabad/Vadodara Gujarati. The educated urban register.\nSpoken register markers: Gujarati has relatively small gap between written and spoken educated register. For Dub Shorts, use natural conversational pacing but standard vocabulary.\nLiterary calibration: Umashankar Joshi's sober, measured philosophical prose. Sundaram's accessible depth. Gujarati philosophical prose is characteristically clear and sober — not ornate, not emotional.\nPacing threshold (Dub Short): up to +18% longer than original.\nWATCH — Cultural contamination risks:\n  - Vaishnava Pushti Marg vocabulary: runs VERY deep in Gujarati culture — કૃષ્ણ-bhakti register, પ્રસાદ (prasād), સેવા (sevā in devotional sense), ભક્તિ (bhakti)\n  - વહાલ (vahāl — divine love/affection) for compassion — avoid; prefer કરુણા (karuṇā)\n  - મોક્ષ (mōkṣa) — prefer મુક્તિ (mukti) or સ્વતંત્રતા (svatantratā)\n  - અહંકાર (ahaṃkār) — acceptable but watch pride connotation\nPREFERRED: કરુણા (karuṇā) for compassion; દયા (dayā) for mercy — keep distinct; મૌન (maun) for silence; સત્ય (satya) for truth; અહંકાર for ego; મુક્તિ for liberation", "Punjabi": "PUNJABI-SPECIFIC GUIDELINES:\nDialect: Standard Majhi dialect — Amritsar/historical Lahore register, written in Gurmukhi script. The reference educated Punjabi.\nSpoken register markers: Punjabi has natural directness and force — use it. Colloquial contractions are natural and should be used for Dub Shorts. Avoid overly written/formal constructions.\nLiterary calibration: Amrita Pritam's direct, unsentimentalised prose. Nanak Singh's accessible register. Punjabi philosophical writing has a muscular directness — preserve it.\nPacing threshold (Dub Short): up to +18% longer than original.\nWATCH — Cultural contamination risks:\n  - Gurbani vocabulary: ਵਾਹਿਗੁਰੂ (Vāhigurū), ਨਾਮ (Nām in Sikh theological sense), ਸਿਮਰਨ (simaran — contemplation of God's name), ਕਿਰਪਾ (kirpā — divine grace)\n  - ਕਿਰਪਾ (kirpā) for compassion — carries Gurbani divine-grace weight; prefer ਦਇਆ (da'iā) or ਕਰੁਣਾ (karuṇā)\n  - ਮੁਕਤੀ (mukti) — acceptable but check it doesn't carry Sikh theological liberation connotation specifically\n  - ਹਉਮੈ (ha'umai) for ego — this IS the Sikh theological term for ego; it works philosophically but carries specific Sikh weight — flag this choice\nPREFERRED: ਦਇਆ (da'iā) for compassion; ਰਹਿਮ (rahim) for mercy — keep distinct; ਚੁੱਪ (cupp) or ਮੌਨ (maun) for silence; ਸੱਚ (sac) for truth; ਹਉਮੈ or ਅਹੰਕਾਰ (ahaṃkār) for ego — flag whichever is used", "Odia": "ODIA-SPECIFIC GUIDELINES:\nDialect: Standard Cuttack/Bhubaneswar Odia — the educated urban reference register.\nSpoken register markers: For Dub Shorts, lean toward the spoken register — Odia has a significant gap between formal written and spoken. Use natural spoken verbal forms.\nLiterary calibration: Fakir Mohan Senapati's clarity and groundedness. Gopinath Mohanty's philosophical precision. Odia literary prose values clarity over ornamentation.\nPacing threshold (Dub Short): up to +18% longer than original.\nWATCH — Cultural contamination risks:\n  - Jagannath tradition vocabulary runs very deep in Odia culture: ଜଗନ୍ନାଥ-related terms, ଭକ୍ତି (bhakti), ମହାପ୍ରଭୁ (Mahāprabhu), ପ୍ରସାଦ (prasāda)\n  - ଅନୁଗ୍ରହ (anugraha) for compassion — carries divine grace; prefer କରୁଣା (karuṇā)\n  - ମୋକ୍ଷ (mōkṣa) — prefer ମୁକ୍ତି (mukti) or ସ୍ୱାଧୀନତା (svādhīnatā)\n  - ଅହଂକାର (ahaṃkāra) for ego — acceptable; watch pride connotation\nPREFERRED: କରୁଣା (karuṇā) for compassion; ଦୟା (dayā) for mercy — keep distinct; ମୌନ (mauna) for silence; ସତ୍ୟ (satya) for truth; ଅହଂକାର for ego; ମୁକ୍ତି for liberation", "Bangla": "BANGLA-SPECIFIC GUIDELINES:\nDialect: Standard Kolkata Bangla (not Dhaka dialect unless specified). The educated literary-spoken register.\nSpoken register markers: Bangla has a significant gap between written (shadhubhasha) and spoken (cholitobhasha) — always use cholitobhasha (spoken) for Dub Shorts. For Quotes, standard written cholitobhasha is fine.\nLiterary calibration: Tagore's essay prose — direct, reflective, not ornate (NOT his poetry register). Syed Mujtaba Ali's clean, witty philosophical prose. Bangla philosophical writing can carry depth with lightness — don't make it heavy.\nPacing threshold (Dub Short): up to +20% longer than original.\nWATCH — Cultural contamination risks:\n  - Vaishnava Sahajiya tradition vocabulary: প্রেম (prem in devotional sense), ভক্তি (bhakti), লীলা (līlā)\n  - Baul tradition terms that are common in Bangla culture\n  - Shakta vocabulary: শক্তি (śakti in goddess-power sense), মা (mā as divine mother)\n  - অনুগ্রহ (anugraha) for compassion — carries grace weight; prefer করুণা (karuṇā)\n  - মোক্ষ (mōkṣa) — prefer মুক্তি (mukti) or স্বাধীনতা (svādhīnatā)\n  - অহংকার (ahaṃkār) for ego — acceptable; watch pride connotation\nPREFERRED: করুণা (karuṇā) for compassion; দয়া (dayā) for mercy — keep distinct; মৌন (mauna) for silence; সত্য (satya) for truth; অহংকার for ego; মুক্তি for liberation"};
+
+function generatePrompt() {
+  const type = document.getElementById('type-sel').value;
+  const origLang = document.getElementById('orig-lang').value;
+  const transLang = document.getElementById('trans-lang').value;
+  const duration = document.getElementById('duration').value.trim();
+  const origText = document.getElementById('orig-text').value.trim();
+  const transText = document.getElementById('trans-text').value.trim();
+  if (!origText) { showErr('Please paste the original text.'); return; }
+  if (!transText) { showErr('Please paste the translation.'); return; }
+  clearErr();
+  const langBlock = LANG_BLOCKS[transLang] || '';
+  let prompt = PROMPT_TEMPLATE.replace('[LANGUAGE_SPECIFIC_BLOCK]', langBlock);
+  const inputBlock = `TYPE: ${type}\nORIGINAL LANGUAGE: ${origLang}\n` +
+    (type === 'Dub Short' && duration ? `ORIGINAL DURATION: ${duration} seconds\n` : '') +
+    `TRANSLATION LANGUAGE: ${transLang}\n\nORIGINAL TEXT:\n${origText}\n\nTRANSLATION:\n${transText}`;
+  prompt = prompt.replace(
+    'TYPE: [TYPE]\nORIGINAL LANGUAGE: [ORIG_LANG]\n[If Dub Short] ORIGINAL DURATION: [DURATION] seconds\nTRANSLATION LANGUAGE: [TRANS_LANG]\n\nORIGINAL TEXT:\n[ORIGINAL_TEXT]\n\nTRANSLATION:\n[TRANSLATION_TEXT]',
+    inputBlock
+  );
+  generatedPrompt = prompt;
+  document.getElementById('prompt-preview').textContent = prompt.substring(0, 1500) + '\n\n... [full prompt ready to copy] ...';
+  document.getElementById('char-count').textContent = prompt.length.toLocaleString() + ' characters';
+  document.getElementById('result').style.display = 'block';
+  document.getElementById('copy-btn').textContent = '\uD83D\uDCCB Copy Full Prompt';
+  document.getElementById('copy-btn').className = 'btn-copy';
+  document.getElementById('result').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+async function copyPrompt() {
+  try {
+    await navigator.clipboard.writeText(generatedPrompt);
+  } catch(e) {
+    const ta = document.createElement('textarea');
+    ta.value = generatedPrompt;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+  }
+  const btn = document.getElementById('copy-btn');
+  btn.textContent = '\u2713 Copied!';
+  btn.className = 'btn-copy copied';
+  setTimeout(() => { btn.textContent = '\uD83D\uDCCB Copy Full Prompt'; btn.className = 'btn-copy'; }, 2500);
+}
+
+function showErr(msg) { const el = document.getElementById('err-box'); el.textContent = msg; el.style.display = 'block'; }
+function clearErr() { document.getElementById('err-box').style.display = 'none'; }
+function resetForm() {
+  document.getElementById('result').style.display = 'none';
+  document.getElementById('orig-text').value = '';
+  document.getElementById('trans-text').value = '';
+  document.getElementById('duration').value = '';
+  clearErr();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+</script>
+</body>
+</html>
